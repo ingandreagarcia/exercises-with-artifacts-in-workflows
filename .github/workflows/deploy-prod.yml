@@ -1,0 +1,35 @@
+name: Deploy Prod
+
+on:
+ # workflow_run vigila otro flujo de trabajo para que este arranque automáticamente cuando aquel termine 
+  workflow_run:
+    workflows: ["Build and Deploy"] # nombre exacto del flujo anterior que debe vigilar (name)
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read  # le da permiso para consultar el estado y los archivos generados por el flujo anterior.
+
+
+jobs:
+  prod:
+    name: Deploy Prod
+    runs-on: ubuntu-latest
+    # Evalúa el resultado final del workflow que disparó este evento. Si la conclusión fue 'success' (éxito), el trabajo avanza; si fue 'failure' (fallo) o 'cancelled' (cancelado) se omite el trabajo.
+    if: github.event.workflow_run.conclusion == 'success' 
+    # Asocia este trabajo con el entorno llamado prod configurado en tu repositorio de GitHub
+    environment: prod
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: octomatch
+          path: website
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to Production
+        run: |
+          echo "Downloaded artifact contents:"
+          tree website
+          echo "Demo deploy step: replace with your real deploy command."
