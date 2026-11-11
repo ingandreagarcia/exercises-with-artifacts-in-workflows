@@ -1,0 +1,43 @@
+name: Build and Deploy
+
+on:
+  # workflow_dispatch: Habilita un botón en la interfaz web de GitHub (dentro de la pestaña Actions) para que puedas ejecutar el flujo de trabajo manualmente cuando tú quieras
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+# permisos de seguridad que tendrá el token automático de GitHub (GITHUB_TOKEN)
+permissions:
+  contents: read # este flujo solo puede leer el código del repositorio
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: octomatch
+          path: dist
+
+
+  dev:
+    name: Deploy Dev
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: octomatch
+          path: website
+      - name: Deploy to Dev
+        run: |
+          echo "Downloaded artifact contents:"
+          tree website
+          echo "Demo deploy step: replace with your real deploy command."
